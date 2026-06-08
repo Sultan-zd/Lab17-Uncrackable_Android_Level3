@@ -1,0 +1,25 @@
+============================================================
+ INFORMATIONS DE TRAÇABILITÉ — Lab 17
+============================================================
+
+Analyste        : Étudiant Sécurité
+Date            : 2026-06-08
+Durée estimée   : 4h00
+Environnement   : Windows 11 + Android Studio (AVD ARM64 API 30+)
+
+Cible           : UnCrackable-Level3.apk (OWASP MSTG)
+Package         : owasp.mstg.uncrackable3
+SHA-256 APK     : (à compléter après téléchargement)
+Architecture    : x86_64 / arm64-v8a (selon émulateur)
+
+Outils :
+  - Android Studio (émulateur ARM64 API 30+)
+  - Ghidra 11.x (analyse binaire native)
+  - Jadx-GUI (décompilation Java/DEX)
+  - apktool 2.9.x (décompilation/recompilation smali)
+  - Python 3.11+ (script de décodage XOR)
+  - ADB + apksigner (signature et déploiement)
+
+Cadre légal     : Exercice pédagogique — APK open-source OWASP
+Référentiel     : OWASP MASVS v2.0 — MASVS-RESILIENCE
+============================================================

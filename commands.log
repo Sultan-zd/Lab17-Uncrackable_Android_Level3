@@ -1,0 +1,59 @@
+# ============================================================
+# Lab 17 — Log chronologique des commandes exécutées
+# OWASP UnCrackable Level 3 — Cracking
+# ============================================================
+
+# --- Étape 0 : Téléchargement et installation de l'APK ---
+wget https://github.com/OWASP/owasp-mstg/raw/master/Crackmes/Android/Level_03/UnCrackable-Level3.apk
+adb install UnCrackable-Level3.apk
+
+# --- Étape 1 : Analyse statique avec Jadx-GUI ---
+# Ouvrir UnCrackable-Level3.apk dans Jadx-GUI
+# Naviguer vers sg.vantagepoint.uncrackable3 → MainActivity
+# Observer verifyLibs(), onCreate(), System.loadLibrary("foo")
+
+# --- Étape 2 : Décompilation avec apktool ---
+apktool d UnCrackable-Level3.apk -o uncrackable3
+
+# --- Étape 3 : Patch smali — Suppression anti-root/tampering ---
+# Ouvrir uncrackable3/smali/sg/vantagepoint/uncrackable3/MainActivity.smali
+# Rechercher "showDialog" — 3 occurrences
+# Modifier le 2ème résultat (dans onCreate) :
+#   Remplacer : const-string v0, "Rooting or tampering detected."
+#               invoke-direct {p0, v0}, ...showDialog...
+#   Par :       return-void
+# Optionnel : neutraliser la méthode showDialog elle-même
+
+# --- Étape 4 : Recompilation, signature, installation ---
+apktool b uncrackable3 -o UnCrackable-Level3-patched.apk
+apksigner sign --ks "%USERPROFILE%\.android\debug.keystore" UnCrackable-Level3-patched.apk
+adb devices
+adb uninstall owasp.mstg.uncrackable3
+adb install -r UnCrackable-Level3-patched.apk
+adb shell getprop ro.product.cpu.abi
+
+# --- Étape 5 : Analyse native avec Ghidra ---
+# Importer libfoo.so dans Ghidra (New Project → Import File)
+# Chercher sub_73D0 dans Functions (.init_array)
+# Identifier anti-Frida (/proc/self/maps → "frida"/"exposed")
+# Identifier anti-debug (ptrace)
+# Patch : première instruction de sub_73D0 → RET
+# Exporter libfoo.so patchée → remplacer dans uncrackable3/lib/
+
+# --- Étape 6 : Reconstruction après patch natif ---
+apktool b uncrackable3 -o UnCrackable-Level3-patched.apk
+apksigner sign --ks "%USERPROFILE%\.android\debug.keystore" UnCrackable-Level3-patched.apk
+adb uninstall owasp.mstg.uncrackable3
+adb install -r UnCrackable-Level3-patched.apk
+
+# --- Étape 7 : Analyse de la logique de vérification ---
+# Dans Ghidra : Symbol Tree → Java_sg_vantagepoint_uncrackable3_Check_check_code
+# Suivre vers FUN_001012c0
+# Identifier l'obfuscation (LCG + malloc + liste chaînée)
+# Relever les 3 qwords finaux (24 octets) :
+#   1d 08 11 13 0f 17 49 15 0d 00 03 19 5a 1d 13 15 08 0e 5a 00 17 08 13 14
+
+# --- Étape 8 : Décodage XOR et validation ---
+python scripts/decode_key.py
+# Résultat : making owasp great again
+# Saisir dans l'application → Success!
